@@ -1,0 +1,28 @@
+li {
+	display: inline-flex;
+	background-color: #e8e8e8;
+	border-radius: 7px;
+	padding: 10px;
+	margin-bottom: 10px;
+}
+li .image {
+	margin-right: 10px;
+}
+li .image img {
+	border-radius: 10%;
+}
+li .content p {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+}
+li .content .username {
+	font-style: italic;
+}
+li .delete {
+	cursor: pointer;
+}
+li a {
+	text-decoration: none;
+	color: black;
+}
