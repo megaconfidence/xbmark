@@ -1,9 +1,12 @@
+import time from './time.js';
+
 async function getTweet(url) {
 	const id = url.match(/[0-9]{19}/)[0];
 	const res = await fetch(`/tweet/?id=${id}`);
 	const tweet = await res.json();
 	return [String(id), tweet];
 }
+
 function saveTweet(id, tweet) {
 	let tweets = JSON.parse(localStorage.getItem('tweets')) || {};
 	tweets[id] = tweet;
@@ -14,67 +17,61 @@ function saveTweet(id, tweet) {
 
 function buildTweets(tweets) {
 	const list = [];
-	for (id in tweets) {
+	for (let id in tweets) {
 		const t = tweets[id];
 		list.push(`
 				<li>
 					<div class="image"><img src="${t.img}" /></div>
-					<a href="${t.url}">
-						<div class="content">
-							<p class="username">@${t.name}</p>
-							<p>${t.text}</p>
-						</div>
-					</a>
-					<div class="delete" onClick="deleteTweet('${id}')">🗑️</div>
+					<div class="content">
+						<p>${t.text}</p>
+						<p class="username">@${t.name} - ${time(new Date(t.date))}</p>
+					</div>
+					<div class="control">
+						<a href="${t.url}"><img src="images/open.svg" /></a>
+						<img onClick="deleteTweet('${id}')" src="images/close.svg" />
+					</div>
 				</li>
 		`);
 	}
-	document.querySelector('ul').innerHTML = list.join('');
+	document.querySelector('ul').innerHTML = list.length
+		? list.join('')
+		: `<p class="nobmarks">👀 Looks like your don't have any bookmarks yet. Share tweets to this app to get going!</p>`;
 }
 
-function loadTweets() {
+window.onload = () => {
 	const tweets = JSON.parse(localStorage.getItem('tweets')) || {};
 	buildTweets(tweets);
-}
+};
 
-window.onload = loadTweets;
-
-function deleteTweet(id) {
+window.deleteTweet = (id) => {
 	const tweets = saveTweet(id, null);
 	buildTweets(tweets);
-}
+};
 
+// Share target
 window.addEventListener('DOMContentLoaded', async () => {
-	const [id, tweet] = await getTweet('https://twitter.com/_olanetsoft/status/1793786263138664537/photo/1');
+	const url = new URL(window.location);
+	const urlText = url.searchParams.get('text');
+	if (!urlText) return;
+	const [id, tweet] = await getTweet(urlText);
 	const tweets = saveTweet(id, tweet);
 	buildTweets(tweets);
-	//
-	// const url = new URL(window.location);
-	// const [id, tweet] = await getTweet(url.searchParams.get('text'));
-	// const tweets = saveTweet(id, tweet);
-	// buildTweets(tweets);
 });
 
-// Initialize deferredPrompt for use later to show browser install prompt.
+// PWA install
 let deferredPrompt;
+const appHeader = document.querySelector('h2');
+const installBtn = document.querySelector('button');
 
 window.addEventListener('beforeinstallprompt', (e) => {
-	// Prevent the mini-infobar from appearing on mobile
 	e.preventDefault();
-	// Stash the event so it can be triggered later.
 	deferredPrompt = e;
-	// Update UI notify the user they can install the PWA
-	// Optionally, send analytics event that PWA install promo was shown.
-	console.log(`'beforeinstallprompt' event was fired.`);
+	installBtn.classList.remove('hide');
+	appHeader.classList.remove('fancy');
 });
-document.querySelector('button').addEventListener('click', async () => {
-	// Hide the app provided install promotion
-	// Show the install prompt
+
+installBtn.addEventListener('click', async () => {
 	deferredPrompt.prompt();
-	// Wait for the user to respond to the prompt
 	const { outcome } = await deferredPrompt.userChoice;
-	// Optionally, send analytics event with outcome of user choice
-	console.log(`User response to the install prompt: ${outcome}`);
-	// We've used the prompt and can't use it again, throw it away
-	deferredPrompt = null;
+	if (outcome == 'accepted') deferredPrompt = null;
 });

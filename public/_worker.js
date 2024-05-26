@@ -10,6 +10,7 @@ export default {
 			return Response.json({
 				text: tweet.text,
 				name: tweet.user.name,
+				date: tweet.created_at,
 				img: tweet.user.profile_image_url_https,
 				url: `https://x.com/${tweet.user.screen_name}/status/${id}`,
 			});
